@@ -1,3 +1,11 @@
 ![1.2 Photo](assets/images/1.2Photo.png)
 
 println!("bisma's computer: hey hey!"); muncul lebih dulu karena baris tersebut dijalankan secara langsung oleh thread utama program, sedangkan kode di dalam spawner.spawn(async { ... }) belum langsung dieksekusi saat dipanggil. Ketika spawn dipanggil, async block hanya dibungkus menjadi sebuah Future lalu dimasukkan ke dalam antrean task milik executor. Setelah task dimasukkan ke queue, program langsung melanjutkan eksekusi ke baris berikutnya, yaitu println!("hey hey!"), sehingga output itu tampil terlebih dahulu. Task async baru benar-benar dijalankan ketika executor.run() dipanggil. Executor kemudian mengambil task dari queue, menjalankannya hingga menemukan .await pada TimerFuture. Saat timer belum selesai, future mengembalikan Poll::Pending, sehingga task dihentikan sementara. Setelah thread timer selesai tidur selama 2 detik, waker.wake() dipanggil untuk membangunkan task tersebut agar dijalankan kembali oleh executor. Ketika task dipoll ulang dan timer sudah selesai, future mengembalikan Poll::Ready, lalu eksekusi dilanjutkan ke println!("bisma's computer: done!").
+
+![1.3.1 Photo](assets/images/1.3.1Photo.png)
+
+![1.3.2 Photo](assets/images/1.3.2Photo.png)
+
+Spawner adalah bagian pemograman yang berfungsi untuk mengirimpkan task ke dalam sebuah antrian agar nantinya bisa dijalankan oleh executor. Sementara itu, perintah drop(spawner) berperan sebagai sinyal penutup yang menghancurkan objek spawner dari memori. Sinyal ini sangat penting untuk memberi tahu Executor bahwa seluruh tugas sudah selesai dikirim dan tidak akan ada lagi tugas baru yang masuk ke dalam antrean.
+
+Jika perintah drop(spawner) ini dihapus atau dijadikan komentar seperti pada eksperimen ini, Executor akan menganggap Spawner masih aktif dan terus bersiap menunggu tugas berikutnya. Akibatnya, meskipun semua tugas yang ada (seperti mencetak "howdy" dan "done") sudah selesai dijalankan, program tidak akan pernah menutup secara otomatis dan akan mengalami hang atau membeku di terminal karena Executor terus berjalan tanpa batas waktu menunggu kiriman tugas yang sebenarnya tidak akan pernah datang lagi.
