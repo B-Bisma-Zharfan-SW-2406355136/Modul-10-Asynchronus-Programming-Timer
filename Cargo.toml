@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "timer_future",
+    "tutorial10"
+]
+
+resolver = "2"
